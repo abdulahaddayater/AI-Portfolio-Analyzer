@@ -146,7 +146,7 @@ export default function Home() {
               <div className="bg-white px-8 py-6 rounded-xl border border-slate-100 shadow-sm text-center min-w-[200px]">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Overall Score</div>
                 <div className="text-5xl font-extrabold text-slate-900">
-                  {Math.round((results.design?.score + results.seo?.score + results.performance?.score) / 3 || 0)}
+                  {results.overall_score || 0}
                 </div>
               </div>
             </div>
@@ -154,19 +154,19 @@ export default function Home() {
             <div className="p-8">
               {/* Score Cards */}
               <div className="grid md:grid-cols-3 gap-6 mb-12">
-                <MiniScoreCard title="Portfolio Design" icon={<Layout className="w-5 h-5" />} score={results.design?.score} />
-                <MiniScoreCard title="Content Feedback" icon={<Search className="w-5 h-5" />} score={results.seo?.score} />
-                <MiniScoreCard title="UX & Navigation" icon={<Zap className="w-5 h-5" />} score={results.performance?.score} />
+                <MiniScoreCard title="Portfolio Design" icon={<Layout className="w-5 h-5" />} score={results.design_score} />
+                <MiniScoreCard title="Content Quality" icon={<Search className="w-5 h-5" />} score={results.content_score} />
+                <MiniScoreCard title="UX & Navigation" icon={<Zap className="w-5 h-5" />} score={results.ux_score} />
               </div>
 
-              {/* Suggestions Grid */}
-              <div className="grid md:grid-cols-2 gap-8">
+              {/* Strengths & Improvements */}
+              <div className="grid md:grid-cols-2 gap-8 mb-12">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><Lightbulb className="w-5 h-5 text-amber-500" /> Professional Impact</h3>
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-emerald-500" /> Key Strengths</h3>
                   <div className="grid gap-3">
-                    {results.content?.checklist?.slice(0, 4).map((item: string, i: number) => (
+                    {results.strengths?.map((item: string, i: number) => (
                       <div key={i} className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 text-indigo-500 shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
                         <span className="text-slate-700 text-sm font-medium">{item}</span>
                       </div>
                     ))}
@@ -174,49 +174,45 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><Search className="w-5 h-5 text-blue-500" /> Content Checklist</h3>
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><Lightbulb className="w-5 h-5 text-amber-500" /> Areas for Improvement</h3>
                   <div className="grid gap-3">
-                    <SeoItem label="Title Tag" status={results.seo?.checks?.title} />
-                    <SeoItem label="Meta Description" status={results.seo?.checks?.description} />
-                    <SeoItem label="Heading Structure" status={results.seo?.checks?.headings} />
-                    <SeoItem label="Image Alt Tags" status={results.seo?.checks?.images} />
+                    {results.improvements?.map((item: string, i: number) => (
+                      <div key={i} className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex items-start gap-3">
+                        <Zap className="w-5 h-5 text-amber-500 shrink-0" />
+                        <span className="text-slate-700 text-sm font-medium">{item}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Portfolio Structure Analysis */}
-              {results.structure && (
-                <div className="mt-12 pt-10 border-t border-slate-100">
-                  <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                    <Layout className="w-5 h-5 text-indigo-500" /> Portfolio Structure Analysis
-                  </h3>
-
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                    <StructureItem label="Hero Section" status={results.structure.hero} />
-                    <StructureItem label="About Section" status={results.structure.about} />
-                    <StructureItem label="Projects Section" status={results.structure.projects} />
-                    <StructureItem label="Skills Section" status={results.structure.skills} />
-                    <StructureItem label="Contact Section" status={results.structure.contact} />
-                    <StructureItem label="Testimonials" status={results.structure.testimonials} />
+              {/* Missing Sections & Final Feedback */}
+              <div className="grid md:grid-cols-2 gap-8 border-t border-slate-100 pt-10">
+                {results.missing_sections && results.missing_sections.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <XCircle className="w-5 h-5 text-rose-500" /> Missing Sections
+                    </h3>
+                    <ul className="grid gap-2 text-sm text-slate-700 bg-rose-50/50 p-6 rounded-xl border border-rose-100">
+                      {results.missing_sections.map((sec: string, idx: number) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-rose-400 mt-0.5">•</span>
+                          <span className="font-medium">{sec}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
+                )}
 
-                  {results.structure.tips && results.structure.tips.length > 0 && (
-                    <div className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
-                      <h4 className="font-bold text-indigo-900 mb-3 flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4 text-indigo-500" /> Tips for Improvement
-                      </h4>
-                      <ul className="grid gap-2 text-sm text-indigo-800">
-                        {results.structure.tips.map((tip: string, idx: number) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-indigo-400 mt-0.5">•</span>
-                            <span>{tip}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                <div className={!(results.missing_sections && results.missing_sections.length > 0) ? "md:col-span-2" : ""}>
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-indigo-500" /> Final Feedback
+                  </h3>
+                  <div className="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100 h-full">
+                    <p className="text-indigo-900 text-sm leading-relaxed">{results.final_feedback}</p>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           </motion.div>
 

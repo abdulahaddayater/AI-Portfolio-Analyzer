@@ -47,55 +47,30 @@ export async function POST(req: Request) {
     }
 
     const prompt = `
-You are an expert AI recruiter, UX/UI designer, and portfolio reviewer.
+You are an expert AI recruiter, UX/UI designer, and tech hiring manager.
 Analyze the following portfolio website context for: ${urlObj.href}
 
 Technical context found in HTML:
 ${htmlContext}
 
-Based on this, perform a deep audit tailored for a developer, designer, or freelancer portfolio. Return ONLY a valid JSON object matching exactly this structure, no markdown or text outside the JSON:
+Based on this, perform a deep audit tailored for a developer, designer, or freelancer portfolio. Evaluate based on these criteria:
+1. Portfolio Design (layout, typography, spacing, professionalism)
+2. UX & Navigation
+3. Portfolio Content (hero, about, projects, skills, contact)
+4. Project Presentation (problem, solution, technologies, results)
+5. Professional Impact for recruiters or clients
+
+Return ONLY a valid JSON object matching exactly this structure, no markdown or text outside the JSON:
 
 {
-  "design": {
-    "score": <number 1-100>,
-    "feedback": "<Portfolio Design Review: evaluate layout, visual hierarchy, and UI quality>",
-    "suggestions": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"]
-  },
-  "seo": {
-    "score": <number 1-100>,
-    "feedback": "<Content Feedback: evaluate project descriptions, clarity, and storytelling>",
-    "checks": {
-      "title": "<Good/Bad - Evaluate if title is professional>",
-      "description": "<Good/Bad - Evaluate if description clearly states their role>",
-      "headings": "<Good/Bad - Evaluate if headings guide the narrative>",
-      "images": "<Good/Bad - Evaluate if project images have context>"
-    },
-    "suggestions": ["<suggestion 1>", "<suggestion 2>"]
-  },
-  "performance": {
-    "score": <number 1-100>,
-    "feedback": "<UX & Navigation: check if the portfolio is easy to navigate to find key projects or contact info>",
-    "suggestions": ["<suggestion>"]
-  },
-  "accessibility": {
-    "score": <number 1-100>,
-    "feedback": "<accessibility feedback>",
-    "suggestions": ["<suggestion>"]
-  },
-  "content": {
-    "heroSuggestion": "<AI generated improved hero headline to attract clients/recruiters>",
-    "ctaSuggestion": "<AI generated improved call to action string to get hired>",
-    "checklist": ["<actionable checklist item 1 for Professional Impact>", "<checklist item 2>", "<checklist item 3>", "<checklist item 4>", "<checklist item 5>"]
-  },
-  "structure": {
-    "hero": "Present" | "Missing",
-    "about": "Present" | "Missing",
-    "projects": "Present" | "Missing",
-    "skills": "Present" | "Missing",
-    "contact": "Present" | "Missing",
-    "testimonials": "Present" | "Missing",
-    "tips": ["<generate helpful tip 1 if any section is missing>", "<generate helpful tip 2>"]
-  }
+  "overall_score": <number 0-100>,
+  "design_score": <number 0-100>,
+  "content_score": <number 0-100>,
+  "ux_score": <number 0-100>,
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "improvements": ["<improvement 1>", "<improvement 2>"],
+  "missing_sections": ["<missing section 1>", "<missing section 2>"],
+  "final_feedback": "<Provide a short professional summary explaining the overall portfolio quality>"
 }
 `;
 
