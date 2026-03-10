@@ -1,55 +1,52 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-// Fallback key
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "DUMMY_KEY");
-
 export async function POST(req: Request) {
+  try {
+    const { url } = await req.json();
+    if (!url) {
+      return NextResponse.json({ error: "Website URL is required" }, { status: 400 });
+    }
+
+    let urlObj;
     try {
-        const { url } = await req.json();
-        if (!url) {
-            return NextResponse.json({ error: "Website URL is required" }, { status: 400 });
-        }
+      urlObj = new URL(url.startsWith("http") ? url : `https://${url}`);
+    } catch (e) {
+      return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
+    }
 
-        let urlObj;
-        try {
-            urlObj = new URL(url.startsWith("http") ? url : `https://${url}`);
-        } catch (e) {
-            return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
-        }
+    let htmlContext = "";
+    try {
+      const response = await fetch(urlObj.href, {
+        headers: { "User-Agent": "AI Portfolio Analyzer / 1.0" },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (response.ok) {
+        const text = await response.text();
+        const titleMatch = text.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const descMatch = text.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i) ||
+          text.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["'][^>]*>/i);
+        const h1Matches = [...text.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi)].map(m => m[1]).slice(0, 3);
 
-        let htmlContext = "";
-        try {
-            const response = await fetch(urlObj.href, {
-                headers: { "User-Agent": "AI Portfolio Analyzer / 1.0" },
-                signal: AbortSignal.timeout(5000)
-            });
-            if (response.ok) {
-                const text = await response.text();
-                const titleMatch = text.match(/<title[^>]*>([^<]+)<\/title>/i);
-                const descMatch = text.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i) ||
-                    text.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["'][^>]*>/i);
-                const h1Matches = [...text.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi)].map(m => m[1]).slice(0, 3);
+        const imgMatches = [...text.matchAll(/<img[^>]+>/gi)].slice(0, 10);
+        const imgsWithAlt = imgMatches.filter(m => m[0].includes('alt='));
 
-                const imgMatches = [...text.matchAll(/<img[^>]+>/gi)].slice(0, 10);
-                const imgsWithAlt = imgMatches.filter(m => m[0].includes('alt='));
-
-                htmlContext = `
+        htmlContext = `
           Page Title: ${titleMatch ? titleMatch[1] : 'Not Found'}
           Meta Description: ${descMatch ? descMatch[1] : 'Not Found'}
           H1 Tags: ${h1Matches.length > 0 ? h1Matches.join(', ') : 'Not Found'}
           Images analyzed: ${imgMatches.length}. Images with alt tag: ${imgsWithAlt.length}
           Approximate HTML Size: ${text.length} bytes.
         `;
-            } else {
-                htmlContext = "Could not fetch page contents due to server block or error.";
-            }
-        } catch (fetchError) {
-            console.warn("Fetch failed:", fetchError);
-            htmlContext = "Could not fetch page contents (Timeout or network error).";
-        }
+      } else {
+        htmlContext = "Could not fetch page contents due to server block or error.";
+      }
+    } catch (fetchError) {
+      console.warn("Fetch failed:", fetchError);
+      htmlContext = "Could not fetch page contents (Timeout or network error).";
+    }
 
-        const prompt = `
+    const prompt = `
 You are an expert AI recruiter, UX/UI designer, and portfolio reviewer.
 Analyze the following portfolio website context for: ${urlObj.href}
 
@@ -102,31 +99,33 @@ Based on this, perform a deep audit tailored for a developer, designer, or freel
 }
 `;
 
-        if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === "DUMMY_KEY") {
-            return NextResponse.json(
-                { error: "GEMINI_API_KEY is not configured. Please set it in your environment variables to enable dynamic AI analysis." },
-                { status: 500 }
-            );
-        }
-
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let aiText = response.text();
-
-        const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error("Could not parse valid JSON from AI response");
-        }
-
-        const analysisData = JSON.parse(jsonMatch[0]);
-        return NextResponse.json(analysisData);
-
-    } catch (error: any) {
-        console.error("Analysis API Error:", error);
-        return NextResponse.json(
-            { error: "Failed to analyze website. " + (error.message || "") },
-            { status: 500 }
-        );
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === "DUMMY_KEY") {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY is not configured. Please set it in your environment variables to enable dynamic AI analysis." },
+        { status: 500 }
+      );
     }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let aiText = response.text();
+
+    const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Could not parse valid JSON from AI response");
+    }
+
+    const analysisData = JSON.parse(jsonMatch[0]);
+    return NextResponse.json(analysisData);
+
+  } catch (error: any) {
+    console.error("Analysis API Error:", error);
+    return NextResponse.json(
+      { error: "Failed to analyze website. " + (error.message || "") },
+      { status: 500 }
+    );
+  }
 }
