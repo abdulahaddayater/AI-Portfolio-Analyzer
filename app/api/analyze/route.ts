@@ -47,18 +47,44 @@ export async function POST(req: Request) {
     }
 
     const prompt = `
-You are an expert AI recruiter, UX/UI designer, and tech hiring manager.
-Analyze the following portfolio website context for: ${urlObj.href}
+You are an expert portfolio reviewer, senior UX designer, and tech hiring manager.
 
+Analyze the following portfolio website and provide a professional evaluation.
+
+Portfolio URL: ${urlObj.href}
 Technical context found in HTML:
 ${htmlContext}
 
-Based on this, perform a deep audit tailored for a developer, designer, or freelancer portfolio. Evaluate based on these criteria:
-1. Portfolio Design (layout, typography, spacing, professionalism)
-2. UX & Navigation
-3. Portfolio Content (hero, about, projects, skills, contact)
-4. Project Presentation (problem, solution, technologies, results)
-5. Professional Impact for recruiters or clients
+Evaluate the portfolio based on these categories:
+
+1. Portfolio Design
+* visual design quality
+* layout consistency
+* typography and spacing
+* modern UI practices
+
+2. UX and Navigation
+* clarity of navigation
+* user flow
+* accessibility
+* responsiveness
+
+3. Portfolio Content
+* hero section clarity
+* about section strength
+* skills section
+* contact information
+
+4. Project Presentation
+* clear problem explanation
+* solution explanation
+* technologies used
+* results or impact
+
+5. Professional Impact
+* how convincing the portfolio is for recruiters or clients
+* clarity of developer/designer skills
+* overall professionalism
 
 Return ONLY a valid JSON object matching exactly this structure, no markdown or text outside the JSON:
 
